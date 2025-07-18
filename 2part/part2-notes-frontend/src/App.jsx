@@ -7,7 +7,7 @@ import Footer from './components/Footer'
 
 
 const App = (props) => {
-  const [notes, setNotes] = useState([null])
+  const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('a new note...') 
   const [showAll, setShowAll] = useState(true)
   const [errorMessage, setErrorMessage] = useState('some error happened...')
