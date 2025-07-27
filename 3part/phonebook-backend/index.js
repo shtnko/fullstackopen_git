@@ -6,23 +6,23 @@ const cors = require('cors')
 let persons = [
   {
     id: "1",
-    content: "HTML is easy",
-    important: true
+    name: "HTML is easy",
+    number: "+32 431 432 432"
   },
   {
     id: "2",
-    content: "Browser can execute only JavaScript",
-    important: false
+    name: "Browser can execute only JavaScript",
+    number: "+32 431 432 432"
   },
   {
     id: "3",
-    content: "GET and POST are the most important methods of HTTP protocol",
-    important: true
+    name: "GET and POST are the most important methods of HTTP protocol",
+    number: "+32 431 432 432"
   },
   {
     id: "4",
-    content: "Test record",
-    important: false
+    name: "Test record",
+    number: "+32 431 432 432"
   }
 ]
 
@@ -51,8 +51,8 @@ app.get('/api/persons', (request, response) => {
 
 app.get('/api/persons/:id', (request, response) => {
   const id = request.params.id
-  const note = persons.find(note => note.id === id)
-  if (note) {
+  const person = persons.find(person => person.id === id)
+  if (person) {
     response.json(person)
   } else {
     response.status(404).end()
@@ -69,26 +69,26 @@ const generateId = () => {
 app.post('/api/persons', (request, response) => {
   const body = request.body
 
-  if (!body.content) {
+  if (!body.name) {
     return response.status(400).json({ 
-      error: 'content missing' 
+      error: 'name missing' 
     })
   }
 
   const person = {
-    name: body.content,
-    number: body.important || false,
+    name: body.name,
+    number: body.number || false,
     id: generateId(),
   }
 
-  persons = persons.concat(note)
+  persons = persons.concat(person)
 
-  response.json(note)
+  response.json(person)
 })
 
 app.delete('/api/persons/:id', (request, response) => {
   const id = request.params.id
-  persons = persons.filter(note => person.id !== id)
+  persons = persons.filter(person => person.id !== id)
   response.status(204).end()
 })
 
