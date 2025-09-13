@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 
-
 if (!password) {
   console.log('you must add password as first argument')
   process.exit(1)
@@ -8,11 +7,12 @@ if (!password) {
 
 const password = process.argv[2]
 
-const url = `mongodb+srv://fullstack:${password}@cluster0.9yaigwm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+const baseUrl = `mongodb+srv://fullstack:${password}@cluster0.9yaigwm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
 mongoose.set('strictQuery', false)
-mongoose.connect(url)
+mongoose.connect(baseUrl)
 
 const personSchema = new mongoose.Schema({
+
   name: String,
   number: String,
 })
