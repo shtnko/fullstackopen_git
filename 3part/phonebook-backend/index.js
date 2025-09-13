@@ -1,30 +1,35 @@
+require('dotenv').config()
 const express = require('express')
+const Person = require('./models/person')
 const app = express()
 const cors = require('cors')
+const mongoose = require('mongoose')
+
+// DO NOT SAVE YOUR PASSWORD TO GITHUB!
+const password = process.argv[2]
+const url = `mongodb+srv://fullstack:${password}@cluster0.9yaigwm.mongodb.net/noteApp?retryWrites=true&w=majority&appName=Cluster0`
+
+mongoose.set('strictQuery',false)
+mongoose.connect(url)
+
+// const personSchema = new mongoose.Schema({
+//   name: String,
+//   number: String,
+// })
+
+//const Person = mongoose.model('Person', personSchema)
 
 
-let persons = [
-  {
-    id: "1",
-    name: "HTML is easy",
-    number: "+32 431 432 432"
-  },
-  {
-    id: "2",
-    name: "Browser can execute only JavaScript",
-    number: "+32 431 432 432"
-  },
-  {
-    id: "3",
-    name: "GET and POST are the most important methods of HTTP protocol",
-    number: "+32 431 432 432"
-  },
-  {
-    id: "4",
-    name: "Test record",
-    number: "+32 431 432 432"
-  }
-]
+// personSchema.set('toJSON', {
+//   transform: (document, returnedObject) => {
+//     returnedObject.id = returnedObject._id.toString()
+//     delete returnedObject._id
+//     delete returnedObject.__v
+//   }
+// })
+
+
+let persons = []
 
 const requestLogger = (request, response, next) => {
   console.log('Method:', request.method)
@@ -33,12 +38,20 @@ const requestLogger = (request, response, next) => {
   console.log('---')
   next()
 }
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
 
-app.use(express.json())
-app.use(requestLogger)
-
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
+  next(error)
+}
 
 app.use(express.static('dist'))
+app.use(express.json())
+app.use(requestLogger)
 app.use(cors())
 
 app.get('/', (request, response) => {
@@ -46,17 +59,24 @@ app.get('/', (request, response) => {
 })
 
 app.get('/api/persons', (request, response) => {
-  response.json(persons)
+  Person.find({}).then(persons => {
+      response.json(persons)
+    })
 })
 
-app.get('/api/persons/:id', (request, response) => {
-  const id = request.params.id
-  const person = persons.find(person => person.id === id)
-  if (person) {
-    response.json(person)
-  } else {
-    response.status(404).end()
-  }
+app.get('/api/persons/:id', (request, response, next) => {
+  Person.findById(request.params.id)
+  .then(person => {
+    if (person) {
+      response.json(person)
+    } else {
+      response.status(404).end()
+    }
+  })
+  .catch(error => {
+    console.log(error)
+    response.status(400).send({ error: 'malformatted id' })
+  })
 })
 
 const generateId = () => {
@@ -74,22 +94,44 @@ app.post('/api/persons', (request, response) => {
       error: 'name missing' 
     })
   }
-
-  const person = {
+  const person = new Person ({
     name: body.name,
-    number: body.number || false,
+    number: body.number,
     id: generateId(),
-  }
+  })
+  person.save().then(savedPerson => {
+    response.json(savedPerson)
+  })
+  console.log('new person added', person)
+  // persons = persons.concat(person)
+  // response.json(person)
+})
 
-  persons = persons.concat(person)
+app.put('/api/persons/:id', (request, response, next) => {
+  const { name, number } = request.body
 
-  response.json(person)
+  Person.findById(request.params.id)
+    .then(person => {
+      if (!person) {
+        return response.status(404).end()
+      }
+
+      person.name = name
+      person.number = number
+
+      return person.save().then((updatedPerson) => {
+        response.json(updatedPerson)
+      })
+    })
+    .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-  const id = request.params.id
-  persons = persons.filter(person => person.id !== id)
-  response.status(204).end()
+  Person.findByIdAndDelete(request.params.id)
+  .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response) => {
@@ -97,8 +139,13 @@ const unknownEndpoint = (request, response) => {
 }
 
 app.use(unknownEndpoint)
+// this has to be the last loaded middleware, also all the routes should be registered before this!
+app.use(errorHandler)
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
+
+
+
