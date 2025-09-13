@@ -4,7 +4,7 @@ const Person = require('./models/person')
 
 const app = express()
 
-//const cors = require('cors')
+const cors = require('cors')
 const mongoose = require('mongoose')
 
 // DO NOT SAVE YOUR PASSWORD TO GITHUB!
@@ -54,7 +54,7 @@ const errorHandler = (error, request, response, next) => {
 app.use(express.static('dist'))
 app.use(express.json())
 app.use(requestLogger)
-//app.use(cors())
+app.use(cors())
 
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
@@ -81,12 +81,12 @@ app.get('/api/persons/:id', (request, response, next) => {
   })
 })
 
-const generateId = () => {
-  const maxId = persons.length > 0
-    ? Math.floor(Math.random() * 100)
-    : 0
-  return String(maxId + 1)
-}
+// const generateId = () => {
+//   const maxId = persons.length > 0
+//     ? Math.floor(Math.random() * 100)
+//     : 0
+//   return String(maxId + 1)
+// }
 
 app.post('/api/persons', (request, response) => {
   const body = request.body
@@ -99,7 +99,7 @@ app.post('/api/persons', (request, response) => {
   const person = new Person ({
     name: body.name,
     number: body.number,
-    id: generateId(),
+    //id: generateId(),
   })
   person.save().then(savedPerson => {
     response.json(savedPerson)
